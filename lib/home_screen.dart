@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_database/add_todo.dart';
+import 'package:hive_database/todo.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -9,46 +12,41 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Box friendBox = Hive.box('friend');
-  String? name;
-
-  addFriend() async {
-    await friendBox.put('name', "Bill Gates");
-  }
-
-  getfriend() async {
-    setState(() {
-      name = friendBox.get('name');
-    });
-  }
-
-  updateFriend() async {
-    await friendBox.put('name', "Elon Musk");
-  }
-
-  deleteFriend() async {
-    await friendBox.delete('name');
-  }
-
+  Box todoBox = Hive.box<Todo>('todo');
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Hive DB"),
-      ),
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("$name"),
-            ElevatedButton(onPressed: addFriend, child: Text("Create")),
-            ElevatedButton(onPressed: getfriend, child: Text("Read")),
-            ElevatedButton(onPressed: updateFriend, child: Text("Update")),
-            ElevatedButton(onPressed: deleteFriend, child: Text("Delete")),
-          ],
+        appBar: AppBar(
+          title: Text("Hive Todo"),
         ),
-      ),
-    );
+        body: ValueListenableBuilder(
+            valueListenable: todoBox.listenable(),
+            builder: (context, Box box, widget) {
+              if (box.isEmpty) {
+                return Center(
+                  child: Text("No Todo available !"),
+                );
+              } else {
+                return ListView.builder(
+                    itemCount: box.length,
+                    itemBuilder: (context, index) {
+                      Todo todo = box.getAt(index);
+                      return ListTile(
+                        title: Text(todo.title),
+                      );
+                    });
+              }
+            }),
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddTodo(),
+              ),
+            );
+          },
+        ));
   }
 }
